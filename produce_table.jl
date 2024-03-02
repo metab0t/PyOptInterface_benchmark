@@ -10,12 +10,12 @@ for i in 1:size(df, 1)
     type, model, variables, time = df[i, :]
     inner = get!(models, model, Dict{String,Int}())
     inner[type] = time
-    if type == "jump_direct"
+    if type == "jump_gurobi"
         inner["variables"] = variables
     end
 end
 
-columns = ["model", "variables", "gurobi", "gurobipy", "poi_gurobi", "jump_direct", "pyomo_appsi"]
+columns = ["model", "variables", "gurobi", "gurobipy", "poi_gurobi", "jump_gurobi", "pyomo_appsi"]
 keys = [
     "fac-25",
     "fac-50",

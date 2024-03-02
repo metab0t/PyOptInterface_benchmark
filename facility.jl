@@ -4,7 +4,6 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 using JuMP
-import Gurobi
 
 function solve_facility(model, G, F)
     set_silent(model)
@@ -40,30 +39,33 @@ function solve_facility(model, G, F)
 end
 
 function get_model(arg)
-    if arg == "direct"
+    if arg == "gurobi"
+        import Gurobi
         return direct_model(Gurobi.Optimizer())
-    else
-        return Model(Gurobi.Optimizer)
+    end
+    if arg == "copt"
+        import COPT
+        return direct_model(COPT.Optimizer())
+    end
+    error("Unknown optimizer type: $arg")
+end
+
+function main(io::IO, optimizer_type, Ns = [25, 50, 75, 100])
+    for n in Ns
+        start = time()
+        optimizer = get_model(optimizer_type)
+        model = solve_lqcp(optimizer, n)
+        run_time = round(Int, time() - start)
+        num_var = num_variables(model)
+        content = "jump_$optimizer_type lqcp-$n $num_var $run_time"
+        println(stdout, content)
+        println(io, content)
     end
 end
 
-function main(io::IO, Ns = [25, 50, 75, 100])
-    # for type in ["direct", "default"]
-    for type in ["direct"]
-        for n in Ns
-            start = time()
-            model = solve_facility(get_model(type), n, n)
-            run_time = round(Int, time() - start)
-            num_var = num_variables(model)
-            content = "jump_$type fac-$n $num_var $run_time"
-            println(stdout, content)
-            println(io, content)
-        end
-    end
-end
 
-
-main(stdout, [5])
+optimizer_type = ARGS[1]
+main(stdout, optimizer_type, [5])
 open(joinpath(@__DIR__, "benchmarks.csv"), "a") do io
-    main(io)
+    main(io, optimizer_type)
 end

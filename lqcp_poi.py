@@ -23,14 +23,14 @@ def solve_lqcp(m, N):
     yt = {j: 0.5 * (1 - (j * dx) ** 2) for j in range(N + 1)}
 
     obj = poi.ExprBuilder()
-    obj.add((y[N, 0] - yt[0]) * (y[N, 0] - yt[0]))
+    obj += (y[N, 0] - yt[0]) * (y[N, 0] - yt[0])
     for j in range(1, N):
-        obj.add(2.0 * (y[N, j] - yt[j]) * (y[N, j] - yt[j]))
-    obj.add((y[N, N] - yt[N]) * (y[N, N] - yt[N]))
+        obj += 2.0 * (y[N, j] - yt[j]) * (y[N, j] - yt[j])
+    obj += (y[N, N] - yt[N]) * (y[N, N] - yt[N])
     for i in range(1, N):
-        obj.add(0.25 * a * dt * 2 * (u[i] * u[i]))
-    obj.add(0.25 * a * dt * (u[N] * u[N]))
-    obj.mul(1 / 4 * dx)
+        obj += 0.25 * a * dt * 2 * (u[i] * u[i])
+    obj += 0.25 * a * dt * (u[N] * u[N])
+    obj *= 1 / 4 * dx
     m.set_objective(obj, sense=poi.ObjectiveSense.Minimize)
 
     for i in range(N):

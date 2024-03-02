@@ -1,10 +1,8 @@
 ## Run benchmark experiments
 
 ```
-$ gurobi_cpp_build.bat gurobi110
-
-$ julia facility.jl
-$ julia lqcp.jl
+$ julia facility.jl gurobi
+$ julia lqcp.jl gurobi
 
 $ python facility.py
 $ python facility_gurobipy.py
@@ -13,6 +11,7 @@ $ python lqcp.py
 $ python lqcp_gurobipy.py
 $ python lqcp_poi.py gurobi
 
+$ gurobi_cpp_build.bat gurobi110
 $ julia gurobi_cpp_run.jl
 
 $ julia produce_table.jl
