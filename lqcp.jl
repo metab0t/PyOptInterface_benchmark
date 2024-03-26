@@ -4,6 +4,8 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 using JuMP
+import Gurobi
+import COPT
 
 function solve_lqcp(model, n)
     set_silent(model)
@@ -47,11 +49,9 @@ end
 
 function get_model(arg)
     if arg == "gurobi"
-        import Gurobi
         return direct_model(Gurobi.Optimizer())
     end
     if arg == "copt"
-        import COPT
         return direct_model(COPT.Optimizer())
     end
     error("Unknown optimizer type: $arg")

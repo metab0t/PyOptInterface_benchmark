@@ -4,6 +4,8 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 using JuMP
+import Gurobi
+import COPT
 
 function solve_facility(model, G, F)
     set_silent(model)
@@ -40,11 +42,9 @@ end
 
 function get_model(arg)
     if arg == "gurobi"
-        import Gurobi
         return direct_model(Gurobi.Optimizer())
     end
     if arg == "copt"
-        import COPT
         return direct_model(COPT.Optimizer())
     end
     error("Unknown optimizer type: $arg")
@@ -54,10 +54,10 @@ function main(io::IO, optimizer_type, Ns = [25, 50, 75, 100])
     for n in Ns
         start = time()
         optimizer = get_model(optimizer_type)
-        model = solve_lqcp(optimizer, n)
+        model = solve_facility(optimizer, n, n)
         run_time = round(Int, time() - start)
         num_var = num_variables(model)
-        content = "jump_$optimizer_type lqcp-$n $num_var $run_time"
+        content = "jump_$optimizer_type fac-$n $num_var $run_time"
         println(stdout, content)
         println(io, content)
     end
