@@ -10,7 +10,7 @@ import COPT
 function solve_facility(model, G, F)
     set_silent(model)
     set_time_limit_sec(model, 0.0)
-    set_optimizer_attribute(model, "Presolve", 0)
+    # set_optimizer_attribute(model, "Presolve", 0)
     @variables(model, begin
         0 <= y[1:F, 1:2] <= 1
         s[0:G, 0:G, 1:F] >= 0
@@ -55,7 +55,7 @@ function main(io::IO, optimizer_type, Ns = [25, 50, 75, 100])
         start = time()
         optimizer = get_model(optimizer_type)
         model = solve_facility(optimizer, n, n)
-        run_time = round(Int, time() - start)
+        run_time = round(time() - start, digits=1)
         num_var = num_variables(model)
         content = "jump_$optimizer_type fac-$n $num_var $run_time"
         println(stdout, content)

@@ -70,8 +70,8 @@ def main(Ns=[500, 1000, 1500, 2000]):
     for n in Ns:
         start = time.time()
         model = solve_lqcp(n)
-        run_time = round(time.time() - start)
-        content = "gurobipy lqcp-%i -1 %i" % (n, run_time)
+        run_time = round(time.time() - start, 1)
+        content = f"gurobipy lqcp-{n} -1 {run_time}"
         print(content)
         with open(dir + "/benchmarks.csv", "a") as io:
             io.write(f"{content}\n")

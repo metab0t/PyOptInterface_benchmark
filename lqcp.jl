@@ -62,7 +62,7 @@ function main(io::IO, optimizer_type, Ns=[500, 1000, 1500, 2000])
         start = time()
         optimizer = get_model(optimizer_type)
         model = solve_lqcp(optimizer, n)
-        run_time = round(Int, time() - start)
+        run_time = round(time() - start, digits=1)
         num_var = num_variables(model)
         content = "jump_$optimizer_type lqcp-$n $num_var $run_time"
         println(stdout, content)

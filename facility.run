@@ -14,5 +14,5 @@ for {n in {25, 50, 75, 100}} {
     let t0 := _ampl_elapsed_time + _total_shell_elapsed_time + _total_solve_elapsed_time;
     solve >NUL;
     let t1 := _ampl_elapsed_time + _total_shell_elapsed_time + _total_solve_elapsed_time;
-    printf "n=%d, time=%.3f\n", n, t1-t0;
+    printf "n=%d, time=%.1f\n", n, t1-t0;
 }

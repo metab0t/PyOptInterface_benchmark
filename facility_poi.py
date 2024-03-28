@@ -81,7 +81,7 @@ def main(Ns=[25, 50, 75, 100]):
         start = time.time()
         model = model_constructor()
         solve_facility(model, n, n)
-        run_time = round(time.time() - start)
+        run_time = round(time.time() - start, 1)
         content = f"poi_{solver_name} fac-{n} -1 {run_time}"
         print(content)
         with open(dir + "/benchmarks.csv", "a") as io:

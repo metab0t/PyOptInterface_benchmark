@@ -83,7 +83,7 @@ def main(Ns=[500, 1000, 1500, 2000]):
         start = time.time()
         model = model_constructor()
         solve_lqcp(model, n)
-        run_time = round(time.time() - start)
+        run_time = round(time.time() - start, 1)
         content = f"poi_{solver_name} lqcp-{n} -1 {run_time}"
         print(content)
         with open(dir + "/benchmarks.csv", "a") as io:

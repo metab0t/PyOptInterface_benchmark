@@ -51,8 +51,8 @@ def main(Ns=[25, 50, 75, 100]):
     for n in Ns:
         start = time.time()
         model = solve_facility(n, n)
-        run_time = round(time.time() - start)
-        content = "coptpy fac-%i -1 %i" % (n, run_time)
+        run_time = round(time.time() - start, 1)
+        content = f"coptpy fac-{n} -1 {run_time}"
         print(content)
         with open(dir + "/benchmarks.csv", "a") as io:
             io.write(f"{content}\n")

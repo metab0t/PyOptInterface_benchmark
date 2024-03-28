@@ -6,7 +6,8 @@
 import pyomo.environ as pyo
 from pyomo.contrib import appsi
 from pyomo.opt import SolverFactory
-import os
+from copt_pyomo import *
+import os, sys
 import time
 
 
@@ -78,20 +79,36 @@ def appsi_gurobi(model):
     opt.solve(model)
 
 
+def copt_persistent(model):
+    opt = SolverFactory("copt_persistent")
+    opt.options["timelimit"] = 0.0
+    # opt.options["presolve"] = True
+    opt.set_instance(model)
+    opt.solve(tee=False, load_solutions=False)
+
+
 def main(Ns=[25, 50, 75, 100]):
     dir = os.path.realpath(os.path.dirname(__file__))
-    for solver_f, solver_name in [
-        (appsi_gurobi, "appsi"),
-        # (gurobi_persistent, "persistent"),
-    ]:
-        for n in Ns:
-            start = time.time()
-            model = solve_facility(solver_f, n, n)
-            run_time = round(time.time() - start)
-            content = "pyomo_%s fac-%i -1 %i" % (solver_name, n, run_time)
-            print(content)
-            with open(dir + "/benchmarks.csv", "a") as io:
-                io.write(f"{content}\n")
+
+    optimizer = sys.argv[1]
+
+    if optimizer == "gurobi":
+        solver_f = gurobi_persistent
+        solver_name = "gurobi"
+    elif optimizer == "copt":
+        solver_f = copt_persistent
+        solver_name = "copt"
+    else:
+        raise ValueError(f"Unknown solver {optimizer}")
+
+    for n in Ns:
+        start = time.time()
+        model = solve_facility(solver_f, n, n)
+        run_time = round(time.time() - start, 1)
+        content = f"pyomo_{solver_name} fac-{n} -1 {run_time}"
+        print(content)
+        with open(dir + "/benchmarks.csv", "a") as io:
+            io.write(f"{content}\n")
     return
 
 
