@@ -1,6 +1,7 @@
 """
 This file is the Pyomo extension of the Cardinal Optimizer
 """
+
 import logging
 import re
 import sys
@@ -12,7 +13,9 @@ from pyomo.core.expr.numvalue import value, is_fixed
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.repn import generate_standard_repn
 from pyomo.solvers.plugins.solvers.direct_solver import DirectSolver
-from pyomo.solvers.plugins.solvers.direct_or_persistent_solver import DirectOrPersistentSolver
+from pyomo.solvers.plugins.solvers.direct_or_persistent_solver import (
+    DirectOrPersistentSolver,
+)
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from pyomo.core.kernel.objective import minimize, maximize
 from pyomo.opt.results.results_ import SolverResults
@@ -21,22 +24,25 @@ from pyomo.opt.results.solver import TerminationCondition, SolverStatus
 from pyomo.opt.base import SolverFactory
 from pyomo.core.base.suffix import Suffix
 
-logger = logging.getLogger('pyomo.solvers')
+logger = logging.getLogger("pyomo.solvers")
 
 try:
     import coptpy
+
     coptenv = coptpy.Envr()
 except ImportError:
     raise ApplicationError("No Python bindings available for COPT solver plugin")
 
+
 class DegreeError(ValueError):
     pass
 
-@SolverFactory.register('copt_direct', doc='Direct python interface to COPT')
+
+@SolverFactory.register("copt_direct", doc="Direct python interface to COPT")
 class CoptDirect(DirectSolver):
     def __init__(self, **kwds):
-        if 'type' not in kwds:
-            kwds['type'] = 'copt_direct'
+        if "type" not in kwds:
+            kwds["type"] = "copt_direct"
 
         super(CoptDirect, self).__init__(**kwds)
 
@@ -45,7 +51,11 @@ class CoptDirect(DirectSolver):
         self._version_major = coptpy.COPT.VERSION_MAJOR
         self._version_minor = coptpy.COPT.VERSION_MINOR
         self._version_technical = coptpy.COPT.VERSION_TECHNICAL
-        self._version_name = "COPT %s.%s.%s" % (self._version_major, self._version_minor, self._version_technical)
+        self._version_name = "COPT %s.%s.%s" % (
+            self._version_major,
+            self._version_minor,
+            self._version_technical,
+        )
 
         self._pyomo_var_to_solver_var_map = ComponentMap()
         self._solver_var_to_pyomo_var_map = ComponentMap()
@@ -66,7 +76,7 @@ class CoptDirect(DirectSolver):
         StaleFlagManager.mark_all_as_stale()
 
         if not self._tee:
-            self._solver_model.setParam('Logging', 0)
+            self._solver_model.setParam("Logging", 0)
 
         if self._keepfiles:
             self._solver_model.setLogFile(self._log_file)
@@ -84,7 +94,9 @@ class CoptDirect(DirectSolver):
 
         degree = repn.polynomial_degree()
         if (degree is None) or (degree > max_degree):
-            raise DegreeError('CoptDirect does not support expressions of degree {0}.'.format(degree))
+            raise DegreeError(
+                "CoptDirect does not support expressions of degree {0}.".format(degree)
+            )
 
         if len(repn.quadratic_vars) > 0:
             new_expr = coptpy.QuadExpr(0.0)
@@ -93,11 +105,18 @@ class CoptDirect(DirectSolver):
 
         if len(repn.linear_vars) > 0:
             referenced_vars.update(repn.linear_vars)
-            new_expr += coptpy.LinExpr([self._pyomo_var_to_solver_var_map[i] for i in repn.linear_vars], repn.linear_coefs)
+            new_expr += coptpy.LinExpr(
+                [self._pyomo_var_to_solver_var_map[i] for i in repn.linear_vars],
+                repn.linear_coefs,
+            )
 
         for i, v in enumerate(repn.quadratic_vars):
             x, y = v
-            new_expr.addTerm(repn.quadratic_coefs[i], self._pyomo_var_to_solver_var_map[x], self._pyomo_var_to_solver_var_map[y])
+            new_expr.addTerm(
+                repn.quadratic_coefs[i],
+                self._pyomo_var_to_solver_var_map[x],
+                self._pyomo_var_to_solver_var_map[y],
+            )
             referenced_vars.add(x)
             referenced_vars.add(y)
 
@@ -112,10 +131,12 @@ class CoptDirect(DirectSolver):
             repn = generate_standard_repn(expr, quadratic=False)
 
         try:
-            copt_expr, referenced_vars = self._get_expr_from_pyomo_repn(repn, max_degree)
+            copt_expr, referenced_vars = self._get_expr_from_pyomo_repn(
+                repn, max_degree
+            )
         except DegreeError as e:
             msg = e.args[0]
-            msg += '\nexpr: {0}'.format(expr)
+            msg += "\nexpr: {0}".format(expr)
             raise DegreeError(msg)
 
         return copt_expr, referenced_vars
@@ -142,7 +163,9 @@ class CoptDirect(DirectSolver):
         elif var.is_continuous():
             vtype = coptpy.COPT.CONTINUOUS
         else:
-            raise ValueError('Variable domain type is not recognized for {0}'.format(var.domain))
+            raise ValueError(
+                "Variable domain type is not recognized for {0}".format(var.domain)
+            )
         return vtype
 
     def _add_var(self, var):
@@ -167,34 +190,45 @@ class CoptDirect(DirectSolver):
 
         if con._linear_canonical_form:
             copt_expr, referenced_vars = self._get_expr_from_pyomo_repn(
-                con.canonical_form(),
-                self._max_constraint_degree)
+                con.canonical_form(), self._max_constraint_degree
+            )
         else:
             copt_expr, referenced_vars = self._get_expr_from_pyomo_expr(
-                con.body,
-                self._max_constraint_degree)
+                con.body, self._max_constraint_degree
+            )
 
         if con.has_lb():
             if not is_fixed(con.lower):
-                raise ValueError("Lower bound of constraint {0} is not constant.".format(con))
+                raise ValueError(
+                    "Lower bound of constraint {0} is not constant.".format(con)
+                )
 
         if con.has_ub():
             if not is_fixed(con.upper):
-                raise ValueError("Upper bound of constraint {0} is not constant.".format(con))
+                raise ValueError(
+                    "Upper bound of constraint {0} is not constant.".format(con)
+                )
 
         if con.equality:
-            coptpy_con = self._solver_model.addQConstr(copt_expr == value(con.lower), name=conname)
+            coptpy_con = self._solver_model.addQConstr(
+                copt_expr == value(con.lower), name=conname
+            )
         elif con.has_lb() and con.has_ub():
-            coptpy_con = self._solver_model.addBoundConstr(copt_expr,
-                                                           value(con.lower),
-                                                           value(con.upper),
-                                                           name=conname)
+            coptpy_con = self._solver_model.addBoundConstr(
+                copt_expr, value(con.lower), value(con.upper), name=conname
+            )
         elif con.has_lb():
-            coptpy_con = self._solver_model.addQConstr(copt_expr >= value(con.lower), name=conname)
+            coptpy_con = self._solver_model.addQConstr(
+                copt_expr >= value(con.lower), name=conname
+            )
         elif con.has_ub():
-            coptpy_con = self._solver_model.addQConstr(copt_expr <= value(con.upper), name=conname)
+            coptpy_con = self._solver_model.addQConstr(
+                copt_expr <= value(con.upper), name=conname
+            )
         else:
-            raise ValueError("Constraint does not has lower/upper bound: {0} \n".format(con))
+            raise ValueError(
+                "Constraint does not has lower/upper bound: {0} \n".format(con)
+            )
 
         for var in referenced_vars:
             self._referenced_variables[var] += 1
@@ -215,14 +249,16 @@ class CoptDirect(DirectSolver):
         elif level == 2:
             sos_type = coptpy.COPT.SOS_TYPE2
         else:
-            raise ValueError("Solver does not support SOS level {0} constraints".format(level))
+            raise ValueError(
+                "Solver does not support SOS level {0} constraints".format(level)
+            )
 
         copt_vars = []
         weights = []
 
         self._vars_referenced_by_con[con] = ComponentSet()
 
-        if hasattr(con, 'get_items'):
+        if hasattr(con, "get_items"):
             sos_items = list(con.get_items())
         else:
             sos_items = list(con.items())
@@ -245,16 +281,18 @@ class CoptDirect(DirectSolver):
             self._objective = None
 
         if obj.active is False:
-            raise ValueError('Cannot add inactive objective to solver.')
+            raise ValueError("Cannot add inactive objective to solver.")
 
         if obj.sense == minimize:
             sense = coptpy.COPT.MINIMIZE
         elif obj.sense == maximize:
             sense = coptpy.COPT.MAXIMIZE
         else:
-            raise ValueError('Objective sense is not recognized: {0}'.format(obj.sense))
+            raise ValueError("Objective sense is not recognized: {0}".format(obj.sense))
 
-        copt_expr, referenced_vars = self._get_expr_from_pyomo_expr(obj.expr, self._max_obj_degree)
+        copt_expr, referenced_vars = self._get_expr_from_pyomo_expr(
+            obj.expr, self._max_obj_degree
+        )
 
         for var in referenced_vars:
             self._referenced_variables[var] += 1
@@ -281,8 +319,10 @@ class CoptDirect(DirectSolver):
                 self._solver_model = coptenv.createModel()
         except Exception:
             e = sys.exc_info()[1]
-            msg = ("Unable to create COPT model. Have you installed the Python bindings for COPT?\n\n\t" + \
-                   "Error message: {0}".format(e))
+            msg = (
+                "Unable to create COPT model. Have you installed the Python bindings for COPT?\n\n\t"
+                + "Error message: {0}".format(e)
+            )
             raise Exception(msg)
 
         self._add_block(model)
@@ -291,11 +331,16 @@ class CoptDirect(DirectSolver):
             if n_ref != 0:
                 if var.fixed:
                     if not self._output_fixed_variable_bounds:
-                        raise ValueError("Encountered a fixed variable (%s) inside an active objective or constraint "
-                                         "expression on model %s, which is usually indicative of a preprocessing error."
-                                         "Use the IO-option 'output_fixed_variable_bounds=True' to suppress this error"
-                                         "and fix the variable by overwriting its bounds in the Gurobi instance."
-                                         % (var.name, self._pyomo_model.name,))
+                        raise ValueError(
+                            "Encountered a fixed variable (%s) inside an active objective or constraint "
+                            "expression on model %s, which is usually indicative of a preprocessing error."
+                            "Use the IO-option 'output_fixed_variable_bounds=True' to suppress this error"
+                            "and fix the variable by overwriting its bounds in the Gurobi instance."
+                            % (
+                                var.name,
+                                self._pyomo_model.name,
+                            )
+                        )
 
     def _postsolve(self):
         extract_duals = False
@@ -314,7 +359,10 @@ class CoptDirect(DirectSolver):
                 extract_reduced_costs = True
                 flag = True
             if not flag:
-                raise RuntimeError("***The copt_direct solver plugin cannot extract solution suffix=" + suffix)
+                raise RuntimeError(
+                    "***The copt_direct solver plugin cannot extract solution suffix="
+                    + suffix
+                )
 
         if self._solver_model.ismip:
             if extract_reduced_costs:
@@ -338,63 +386,95 @@ class CoptDirect(DirectSolver):
             soln.status = SolutionStatus.unknown
         elif status == coptpy.COPT.OPTIMAL:
             self.results.solver.status = SolverStatus.ok
-            self.results.solver.termination_message = "Model was solved to optimality within tolerances."
+            self.results.solver.termination_message = (
+                "Model was solved to optimality within tolerances."
+            )
             self.results.solver.termination_condition = TerminationCondition.optimal
             soln.status = SolutionStatus.optimal
         elif status == coptpy.COPT.INFEASIBLE:
             self.results.solver.status = SolverStatus.warning
-            self.results.solver.termination_message = "Model was proven to be infeasible"
+            self.results.solver.termination_message = (
+                "Model was proven to be infeasible"
+            )
             self.results.solver.termination_condition = TerminationCondition.infeasible
             soln.status = SolutionStatus.infeasible
         elif status == coptpy.COPT.UNBOUNDED:
             self.results.solver.status = SolverStatus.warning
-            self.results.solver.termination_message = "Model was proven to be unbounded."
+            self.results.solver.termination_message = (
+                "Model was proven to be unbounded."
+            )
             self.results.solver.termination_condition = TerminationCondition.unbounded
             soln.status = SolutionStatus.unbounded
         elif status == coptpy.COPT.INF_OR_UNB:
             self.results.solver.status = SolverStatus.warning
-            self.results.solver.termination_message = "Model was proven to be infeasible or unbounded."
-            self.results.solver.termination_condition = TerminationCondition.infeasibleOrUnbounded
+            self.results.solver.termination_message = (
+                "Model was proven to be infeasible or unbounded."
+            )
+            self.results.solver.termination_condition = (
+                TerminationCondition.infeasibleOrUnbounded
+            )
             soln.status = SolutionStatus.unsure
         elif status == coptpy.COPT.NUMERICAL:
             self.results.solver.status = SolverStatus.error
-            self.results.solver.termination_message = "Optimization was terminated due to numerical difficulties."
+            self.results.solver.termination_message = (
+                "Optimization was terminated due to numerical difficulties."
+            )
             self.results.solver.termination_condition = TerminationCondition.error
             soln.status = SolutionStatus.error
         elif status == coptpy.COPT.NODELIMIT:
             self.results.solver.status = SolverStatus.aborted
-            self.results.solver.termination_message = "Optimization terminated because the node limit was reached"
-            self.results.solver.termination_condition = TerminationCondition.maxEvaluations
+            self.results.solver.termination_message = (
+                "Optimization terminated because the node limit was reached"
+            )
+            self.results.solver.termination_condition = (
+                TerminationCondition.maxEvaluations
+            )
             soln.status = SolutionStatus.stoppedByLimit
         elif status == coptpy.COPT.TIMEOUT:
             self.results.solver.status = SolverStatus.aborted
-            self.results.solver.termination_message = "Optimization terminated because the time limit was reached."
-            self.results.solver.termination_condition = TerminationCondition.maxTimeLimit
+            self.results.solver.termination_message = (
+                "Optimization terminated because the time limit was reached."
+            )
+            self.results.solver.termination_condition = (
+                TerminationCondition.maxTimeLimit
+            )
             soln.status = SolutionStatus.stoppedByLimit
         elif status == coptpy.COPT.UNFINISHED:
             self.results.solver.status = SolverStatus.error
-            self.results.solver.termination_message = "Optimization was terminated unexpectedly."
+            self.results.solver.termination_message = (
+                "Optimization was terminated unexpectedly."
+            )
             self.results.solver.termination_condition = TerminationCondition.error
             soln.status = SolutionStatus.error
         elif status == coptpy.COPT.INTERRUPTED:
             self.results.solver.status = SolverStatus.aborted
-            self.results.solver.termination_message = "Optimization was terminated by the user."
-            self.results.solver.termination_condition = TerminationCondition.userInterrupt
+            self.results.solver.termination_message = (
+                "Optimization was terminated by the user."
+            )
+            self.results.solver.termination_condition = (
+                TerminationCondition.userInterrupt
+            )
             soln.status = SolutionStatus.stoppedByLimit
         else:
             self.results.solver.status = SolverStatus.error
-            self.results.solver.termination_message = "Unknown COPT status " + "(" + str(status) + ")"
+            self.results.solver.termination_message = (
+                "Unknown COPT status " + "(" + str(status) + ")"
+            )
             self.results.solver.termination_condition = TerminationCondition.error
             self.status = SolutionStatus.error
 
-        self.results.problem.name = 'coptprob'
+        self.results.problem.name = "coptprob"
 
         if self._solver_model.objsense == coptpy.COPT.MINIMIZE:
             self.results.problem.sense = minimize
         elif self._solver_model.objsense == coptpy.COPT.MAXIMIZE:
             self.results.problem.sense = maximize
         else:
-            raise RuntimeError('Unrecognized COPT objective sense: {0}'.format(self._solver_model.objsense))
+            raise RuntimeError(
+                "Unrecognized COPT objective sense: {0}".format(
+                    self._solver_model.objsense
+                )
+            )
 
         self.results.problem.upper_bound = None
         self.results.problem.lower_bound = None
@@ -408,21 +488,35 @@ class CoptDirect(DirectSolver):
             self.results.problem.upper_bound = self._solver_model.bestbnd
             self.results.problem.lower_bound = self._solver_model.objval
         else:
-            raise RuntimeError('Unrecognized COPT objective sense: {0}'.format(self._solver_model.objsense))
+            raise RuntimeError(
+                "Unrecognized COPT objective sense: {0}".format(
+                    self._solver_model.objsense
+                )
+            )
 
         try:
-            soln.gap = self.results.problem.upper_bound - self.results.problem.lower_bound
+            soln.gap = (
+                self.results.problem.upper_bound - self.results.problem.lower_bound
+            )
         except TypeError:
             soln.gap = None
 
-        self.results.problem.number_of_constraints = self._solver_model.rows + self._solver_model.qconstrs + self._solver_model.soss
+        self.results.problem.number_of_constraints = (
+            self._solver_model.rows
+            + self._solver_model.qconstrs
+            + self._solver_model.soss
+        )
         self.results.problem.number_of_nonzeros = self._solver_model.elems
         self.results.problem.number_of_variables = self._solver_model.cols
         self.results.problem.number_of_binary_variables = self._solver_model.bins
         self.results.problem.number_of_integer_variables = self._solver_model.ints
-        self.results.problem.number_of_continuous_variables = self._solver_model.cols - self._solver_model.ints - self._solver_model.bins
+        self.results.problem.number_of_continuous_variables = (
+            self._solver_model.cols - self._solver_model.ints - self._solver_model.bins
+        )
         self.results.problem.number_of_objectives = 1
-        self.results.problem.number_of_solutions = self._solver_model.haslpsol or self._solver_model.hasmipsol
+        self.results.problem.number_of_solutions = (
+            self._solver_model.haslpsol or self._solver_model.hasmipsol
+        )
 
         if self._save_results:
             if self._solver_model.haslpsol or self._solver_model.hasmipsol:
@@ -433,21 +527,21 @@ class CoptDirect(DirectSolver):
                 vars_to_load = var_map.keys()
                 copt_vars = [var_map[pyomo_var] for pyomo_var in vars_to_load]
 
-                var_vals = self._solver_model.getInfo('Value', copt_vars)
+                var_vals = self._solver_model.getInfo("Value", copt_vars)
                 names = []
                 for copt_var in copt_vars:
                     names.append(copt_var.name)
                 for copt_var, val, name in zip(copt_vars, var_vals, names):
                     pyomo_var = self._solver_var_to_pyomo_var_map[copt_var]
                     if self._referenced_variables[pyomo_var] > 0:
-                        soln_variables[name] = {'Value': val}
+                        soln_variables[name] = {"Value": val}
 
                 if extract_reduced_costs:
-                    vals = self._solver_model.getInfo('RedCost', copt_vars)
+                    vals = self._solver_model.getInfo("RedCost", copt_vars)
                     for copt_var, val, name in zip(copt_vars, vals, names):
                         pyomo_var = self._solver_var_to_pyomo_var_map[copt_var]
                         if self._referenced_variables[pyomo_var] > 0:
-                            soln_variables[name]['Rc'] = val
+                            soln_variables[name]["Rc"] = val
 
                 if extract_duals or extract_slacks:
                     copt_cons = self._solver_model.getConstrs()
@@ -466,20 +560,20 @@ class CoptDirect(DirectSolver):
                             soln_constraints[name] = {}
 
                 if extract_duals:
-                    vals = self._solver_model.getInfo('Dual', copt_cons)
+                    vals = self._solver_model.getInfo("Dual", copt_cons)
                     for val, name in zip(vals, con_names):
-                        soln_constraints[name]['Dual'] = val
+                        soln_constraints[name]["Dual"] = val
                     # TODO: Get duals for quadratic constraints
 
                 if extract_slacks:
-                    vals = self._solver_model.getInfo('Slack', copt_cons)
+                    vals = self._solver_model.getInfo("Slack", copt_cons)
                     for val, name in zip(vals, con_names):
-                        soln_constraints[name]['Slack'] = val
+                        soln_constraints[name]["Slack"] = val
 
                     if self._solver_model.qconstrs > 0:
-                        q_vals = self._solver_model.getInfo('Slack', copt_q_cons)
+                        q_vals = self._solver_model.getInfo("Slack", copt_q_cons)
                         for val, name in zip(q_vals, q_con_names):
-                            soln_constraints[name]['Slack'] = val
+                            soln_constraints[name]["Slack"] = val
         elif self._load_solutions:
             if self._solver_model.haslpsol or self._solver_model.hasmipsol:
                 self.load_vars()
@@ -512,14 +606,14 @@ class CoptDirect(DirectSolver):
             vars_to_load = var_map.keys()
 
         copt_vars_to_load = [var_map[pyomo_var] for pyomo_var in vars_to_load]
-        vals = self._solver_model.getInfo('Value', copt_vars_to_load)
+        vals = self._solver_model.getInfo("Value", copt_vars_to_load)
 
         for var, val in zip(vars_to_load, vals):
             if ref_vars[var] > 0:
                 var.set_value(val, skip_validation=True)
 
     def _load_rc(self, vars_to_load=None):
-        if not hasattr(self._pyomo_model, 'rc'):
+        if not hasattr(self._pyomo_model, "rc"):
             self._pyomo_model.rc = Suffix(direction=Suffix.IMPORT)
 
         rc = self._pyomo_model.rc
@@ -530,7 +624,7 @@ class CoptDirect(DirectSolver):
             vars_to_load = var_map.keys()
 
         copt_vars_to_load = [var_map[pyomo_var] for pyomo_var in vars_to_load]
-        vals = self._solver_model.getInfo('RedCost', copt_vars_to_load)
+        vals = self._solver_model.getInfo("RedCost", copt_vars_to_load)
 
         for var, val in zip(vars_to_load, vals):
             if ref_vars[var] > 0:
@@ -538,7 +632,7 @@ class CoptDirect(DirectSolver):
 
     def _load_duals(self, cons_to_load=None):
         # TODO: Dual solution for quadratic constraints are not available
-        if not hasattr(self._pyomo_model, 'dual'):
+        if not hasattr(self._pyomo_model, "dual"):
             self._pyomo_model.dual = Suffix(direction=Suffix.IMPORT)
 
         dual = self._pyomo_model.dual
@@ -554,7 +648,7 @@ class CoptDirect(DirectSolver):
 
     def _load_slacks(self, cons_to_load=None):
         # TODO: The slacks that we return are activities of constraints
-        if not hasattr(self._pyomo_model, 'slack'):
+        if not hasattr(self._pyomo_model, "slack"):
             self._pyomo_model.slack = Suffix(direction=Suffix.IMPORT)
 
         slack = self._pyomo_model.slack
@@ -578,13 +672,13 @@ class CoptDirect(DirectSolver):
         self._load_slacks(cons_to_load)
 
 
-@SolverFactory.register('copt_persistent', doc='Persistent python interface to COPT')
+@SolverFactory.register("copt_persistent", doc="Persistent python interface to COPT")
 class CoptPersistent(PersistentSolver, CoptDirect):
     def __init__(self, **kwds):
-        kwds['type'] = 'copt_persistent'
+        kwds["type"] = "copt_persistent"
         CoptDirect.__init__(self, **kwds)
 
-        self._pyomo_model = kwds.pop('model', None)
+        self._pyomo_model = kwds.pop("model", None)
         if self._pyomo_model is not None:
             self.set_instance(self._pyomo_model, **kwds)
 
@@ -602,7 +696,11 @@ class CoptPersistent(PersistentSolver, CoptDirect):
 
     def update_var(self, var):
         if var not in self._pyomo_var_to_solver_var_map:
-            raise ValueError('The Var provided to update_var needs to be added first: {0}'.format(var))
+            raise ValueError(
+                "The Var provided to update_var needs to be added first: {0}".format(
+                    var
+                )
+            )
 
         coptpy_var = self._pyomo_var_to_solver_var_map[var]
         vtype = self._copt_vtype_from_var(var)
@@ -648,9 +746,14 @@ class CoptPersistent(PersistentSolver, CoptDirect):
         vtype = self._copt_vtype_from_var(var)
         lb, ub = self._copt_lb_ub_from_var(var)
 
-        coptpy_var = self._solver_model.addVar(obj=obj_coef, lb=lb, ub=ub,
-                                               vtype=vtype, name=varname,
-                                               column=coptpy.Column(constrs=constraints, coeffs=coefficients))
+        coptpy_var = self._solver_model.addVar(
+            obj=obj_coef,
+            lb=lb,
+            ub=ub,
+            vtype=vtype,
+            name=varname,
+            column=coptpy.Column(constrs=constraints, coeffs=coefficients),
+        )
 
         self._pyomo_var_to_solver_var_map[var] = coptpy_var
         self._solver_var_to_pyomo_var_map[coptpy_var] = var

@@ -8,16 +8,15 @@ import pyoptinterface as poi
 from pyoptinterface import gurobi, copt
 import os
 import time
+from poi_util import add_ndarray_variable
 
 
 def solve_facility(m, G, F):
     # Create variables
-    y = m.add_variables(range(1, F + 1), range(1, 3), lb=0.0, ub=1.0)
-    s = m.add_variables(range(G + 1), range(G + 1), range(1, F + 1), lb=0.0)
-    z = m.add_variables(
-        range(G + 1), range(G + 1), range(1, F + 1), domain=poi.VariableDomain.Binary
-    )
-    r = m.add_variables(range(G + 1), range(G + 1), range(1, F + 1), range(1, 3))
+    y = add_ndarray_variable(m, (F, 2), lb=0.0, ub=1.0)
+    s = add_ndarray_variable(m, (G + 1, G + 1, F), lb=0.0)
+    z = add_ndarray_variable(m, (G + 1, G + 1, F), domain=poi.VariableDomain.Binary)
+    r = add_ndarray_variable(m, (G + 1, G + 1, F, 2))
     d = m.add_variable()
 
     # Set objective
@@ -26,27 +25,21 @@ def solve_facility(m, G, F):
     # Add constraints
     for i in range(G + 1):
         for j in range(G + 1):
-            expr = poi.quicksum(z.select(i, j, "*"))
+            expr = poi.quicksum(z[i, j, :])
             m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 1.0)
 
     M = 2 * 1.414
     for i in range(G + 1):
         for j in range(G + 1):
-            for f in range(1, F + 1):
+            for f in range(F):
                 expr = s[i, j, f] - d - M * (1 - z[i, j, f])
                 m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
-                expr = r[i, j, f, 1] - (1.0 * i) / G + y[f, 1]
+                expr = r[i, j, f, 0] - i / G + y[f, 0]
                 m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
-                expr = r[i, j, f, 2] - (1.0 * j) / G + y[f, 2]
+                expr = r[i, j, f, 1] - j / G + y[f, 1]
                 m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
-                # expr = (
-                #     r[i, j, f, 1] * r[i, j, f, 1]
-                #     + r[i, j, f, 2] * r[i, j, f, 2]
-                #     - s[i, j, f] * s[i, j, f]
-                # )
-                # m.add_quadratic_constraint(expr, poi.ConstraintSense.LessEqual, 0.0)
                 m.add_second_order_cone_constraint(
-                    [s[i, j, f], r[i, j, f, 1], r[i, j, f, 2]]
+                    [s[i, j, f], r[i, j, f, 0], r[i, j, f, 1]]
                 )
 
     # Optimize model

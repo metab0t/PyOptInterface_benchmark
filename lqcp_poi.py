@@ -8,6 +8,7 @@ import pyoptinterface as poi
 from pyoptinterface import gurobi, copt
 import os
 import time
+from poi_util import add_ndarray_variable
 
 
 def solve_lqcp(m, N):
@@ -17,8 +18,8 @@ def solve_lqcp(m, N):
     h2 = dx**2
     a = 0.001
 
-    y = m.add_variables(range(N + 1), range(N + 1), lb=0.0, ub=1.0)
-    u = m.add_variables(range(N + 1), lb=-1.0, ub=1.0)
+    y = add_ndarray_variable(m, (N + 1, N + 1), lb=0.0, ub=1.0)
+    u = add_ndarray_variable(m, (N + 1,), lb=-1.0, ub=1.0)
 
     yt = {j: 0.5 * (1 - (j * dx) ** 2) for j in range(N + 1)}
 

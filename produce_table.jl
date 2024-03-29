@@ -4,7 +4,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 import DelimitedFiles
-df = DelimitedFiles.readdlm(joinpath(@__DIR__, "benchmarks.csv"))
+df = DelimitedFiles.readdlm(joinpath(@__DIR__, "benchmarks_paper.csv"))
 models = Dict{String,Dict{String,Any}}()
 for i in 1:size(df, 1)
     type, model, variables, time = df[i, :]
