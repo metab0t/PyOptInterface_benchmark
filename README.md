@@ -1,9 +1,15 @@
 ## Preparation
 
 - Install Julia
-- Install JuMP.jl, Gurobi.jl, COPT.jl and DataFrames.jl
-- Install Python
-- Install PyOptInterface, Pyomo, Gurobipy, coptpy and numpy
+```
+julia> ] activate .
+julia> instantiate
+```
+- Install Python and dependencies
+```
+pip install -r requirements.txt
+```
+
 
 ## Run benchmark experiments
 
@@ -34,7 +40,7 @@ $ python facility_poi.py copt
 $ python lqcp_poi.py copt
 ```
 
-- Gurobipy
+- gurobipy
 ```
 $ python facility_gurobipy.py
 $ python lqcp_gurobipy.py
@@ -62,4 +68,4 @@ $ julia produce_table.jl
 ```
 
 ## Reference
-The code for benchmark is adpated from https://github.com/jump-dev/JuMPPaperBenchmarks
+The code for benchmark is adapted from https://github.com/jump-dev/JuMPPaperBenchmarks

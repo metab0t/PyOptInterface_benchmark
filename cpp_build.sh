@@ -12,5 +12,8 @@
 # Update if needed
 # export GUROBI_HOME="/Library/gurobi951/macos_universal2/"
 
-clang++ -O2 facility.cpp -o cpp_facility -I$GUROBI_HOME/include/ -L$GUROBI_HOME/lib -std=c++11 -lgurobi_c++ -l${1}
-clang++ -O2 lqcp.cpp -o cpp_lqcp -I$GUROBI_HOME/include/ -L$GUROBI_HOME/lib -std=c++11 -lgurobi_c++ -l${1}
+clang++ -O2 facility_gurobi.cpp -o facility_gurobi -I$GUROBI_HOME/include/ -L$GUROBI_HOME/lib -std=c++11 -lgurobi_c++ -lgurobi110
+clang++ -O2 lqcp_gurobi.cpp -o lqcp_gurobi -I$GUROBI_HOME/include/ -L$GUROBI_HOME/lib -std=c++11 -lgurobi_c++ -lgurobi110
+
+clang++ -O2 facility_copt.cpp -o facility_copt -I$COPT_HOME/include/ -I$COPT_HOME/include/coptcpp_inc -L$COPT_HOME/lib -std=c++11 -lcopt_cpp -lcopt
+clang++ -O2 lqcp_copt.cpp -o lqcp_copt -I$COPT_HOME/include/ -I$COPT_HOME/include/coptcpp_inc -L$COPT_HOME/lib -std=c++11 -lcopt_cpp -lcopt

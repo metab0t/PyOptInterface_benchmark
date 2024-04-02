@@ -40,9 +40,11 @@ function solve_facility(model, G, F)
     return model
 end
 
+const GRB_ENV = Gurobi.Env()
+
 function get_model(arg)
     if arg == "gurobi"
-        return direct_model(Gurobi.Optimizer())
+        return direct_model(Gurobi.Optimizer(GRB_ENV))
     end
     if arg == "copt"
         return direct_model(COPT.Optimizer())
