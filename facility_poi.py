@@ -26,18 +26,18 @@ def solve_facility(m, G, F):
     for i in range(G + 1):
         for j in range(G + 1):
             expr = poi.quicksum(z[i, j, :])
-            m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 1.0)
+            m.add_linear_constraint(expr, poi.Eq, 1.0)
 
     M = 2 * 1.414
     for i in range(G + 1):
         for j in range(G + 1):
             for f in range(F):
                 expr = s[i, j, f] - d - M * (1 - z[i, j, f])
-                m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+                m.add_linear_constraint(expr, poi.Eq, 0.0)
                 expr = r[i, j, f, 0] - i / G + y[f, 0]
-                m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+                m.add_linear_constraint(expr, poi.Eq, 0.0)
                 expr = r[i, j, f, 1] - j / G + y[f, 1]
-                m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+                m.add_linear_constraint(expr, poi.Eq, 0.0)
                 m.add_second_order_cone_constraint(
                     [s[i, j, f], r[i, j, f, 0], r[i, j, f, 1]]
                 )

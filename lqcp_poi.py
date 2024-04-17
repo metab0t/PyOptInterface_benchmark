@@ -44,19 +44,19 @@ def solve_lqcp(m, N):
                 - 2 * y[i + 1, j]
                 + y[i + 1, j + 1]
             ) / h2
-            m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+            m.add_linear_constraint(expr, poi.Eq, 0.0)
 
     for j in range(N + 1):
         expr = y[0, j]
-        m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+        m.add_linear_constraint(expr, poi.Eq, 0.0)
 
     for i in range(1, N):
         expr = y[i, 2] - 4 * y[i, 1] + 3 * y[i, 0]
-        m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+        m.add_linear_constraint(expr, poi.Eq, 0.0)
 
     for i in range(1, N):
         expr = y[i, N - 2] - 4 * y[i, N - 1] + 3 * y[i, N] - 2 * dx * (u[i] - y[i, N])
-        m.add_linear_constraint(expr, poi.ConstraintSense.Equal, 0.0)
+        m.add_linear_constraint(expr, poi.Eq, 0.0)
 
     m.set_model_attribute(poi.ModelAttribute.Silent, True)
     m.set_model_attribute(poi.ModelAttribute.TimeLimitSec, 0.0)
