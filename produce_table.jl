@@ -31,6 +31,11 @@ import DataFrames
 column_dict = Dict{String,Vector{Any}}()
 column_dict["model"] = keys
 for column in columns[2:end]
+    for key in keys
+        if !haskey(models[key], column)
+            models[key][column] = missing
+        end
+    end
     column_dict[column] = [models[key][column] for key in keys]
 end
 
