@@ -24,11 +24,11 @@ $ julia cpp_run.jl copt
 
 - JuMP
 ```
-$ julia facility.jl gurobi
-$ julia lqcp.jl gurobi
+$ julia --project=. facility.jl gurobi
+$ julia --project=. lqcp.jl gurobi
 
-$ julia facility.jl copt
-$ julia lqcp.jl copt
+$ julia --project=. facility.jl copt
+$ julia --project=. lqcp.jl copt
 ```
 
 - PyOptInterface
@@ -64,7 +64,7 @@ $ python lqcp_pyomo.py copt
 ## Show results
 The result is stored in `benchmarks.csv` file and can be shown by running
 ```
-$ julia produce_table.jl
+$ julia --project=. produce_table.jl
 ```
 
 ## Reference
