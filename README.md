@@ -68,4 +68,4 @@ $ julia --project=. produce_table.jl
 ```
 
 ## Reference
-The code for benchmark is adapted from https://github.com/jump-dev/JuMPPaperBenchmarks
+The code for benchmark is adapted from https://github.com/jump-dev/JuMPPaperBenchmarks and licensed under the MIT License.
