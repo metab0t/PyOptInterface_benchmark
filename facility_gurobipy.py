@@ -15,7 +15,7 @@ def solve_facility(G, F):
     y = m.addVars(range(1, F + 1), range(1, 3), lb=0.0, ub=1.0)
     s = m.addVars(range(G + 1), range(G + 1), range(1, F + 1), lb=0.0)
     z = m.addVars(range(G + 1), range(G + 1), range(1, F + 1), vtype=GRB.BINARY)
-    r = m.addVars(range(G + 1), range(G + 1), range(1, F + 1), range(1, 3))
+    r = m.addVars(range(G + 1), range(G + 1), range(1, F + 1), range(1, 3), lb=-GRB.INFINITY)
     d = m.addVar()
 
     # Set objective
